@@ -6,8 +6,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 1) # helps out clangd LSP
 
 set(CMAKE_CXX_STANDARD 20)
 
-find_package(SDL2 REQUIRED)
-include_directories(${SDL2_INCLUDE_DIRS})
+if (NOT DEFINED EMSCRIPTEN)
+    find_package(SDL2 REQUIRED)
+    include_directories(${SDL2_INCLUDE_DIRS})
+endif()
 
 include(FetchContent)
 FetchContent_Declare(
@@ -23,6 +25,12 @@ add_executable(SDL2Test main.cpp glad.c src/shader.cpp)
 
 target_link_libraries(SDL2Test PRIVATE ${SDL2_LIBRARIES})
 target_link_options(SDL2Test PUBLIC -lGL)
+
+if (DEFINED EMSCRIPTEN)
+    target_compile_options(SDL2Test PUBLIC -sUSE_SDL=2 -Os -g)
+    target_link_options(SDL2Test PUBLIC -sUSE_SDL=2 -sWASM=1 -Os -g -sASSERTIONS)
+    set(CMAKE_EXECUTABLE_SUFFIX .html)
+endif()
 
 b_embed(SDL2Test shaders/fragment_shader.glsl)
 b_embed(SDL2Test shaders/vertex_shader.glsl)
